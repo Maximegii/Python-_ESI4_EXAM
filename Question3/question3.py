@@ -42,3 +42,59 @@ def login_view(request):
         messages.error(request, "Nom d'utilisateur ou mot de passe incorrect.")
 
     return render(request, 'login.html', {'next': next_url})
+
+# Partie B : Permissions et Restrictions 
+# En utilisant le système de permissions Django :
+# 1. Créez deux permissions personnalisées pour le modèle Course :
+
+@receiver(post_migrate)
+def create_custom_permissions(sender, **kwargs):
+    if sender.name == 'your_app_name':  
+        course_content_type = ContentType.objects.get_for_model(Course)
+
+        Permission.objects.get_or_create(
+            codename='can_publish_course',
+            name='Can publish course',
+            content_type=course_content_type,
+        )
+
+        Permission.objects.get_or_create(
+            codename='can_view_statistics',
+            name='Can view statistics',
+            content_type=course_content_type,
+        )
+#2. Écrivez une vue (CBV ou FBV) course_publish : 
+@login_required
+@permission_required('your_app_name.can_publish_course', raise_exception=True)
+def course_publish(request, course_id):
+    try:
+        course = Course.objects.get(id=course_id)
+    except Course.DoesNotExist:
+        return HttpResponseForbidden("Cours non trouvé.")
+
+    if course.status != 'Brouillon':
+        return HttpResponseForbidden("Le cours n'est pas en brouillon.")
+
+    course.status = 'Publié'
+    course.save(update_fields=['status'])
+    return redirect('course_detail', course_id=course.id)
+
+
+# Partie C : Template avec Permissions 
+
+
+{% if user.is_authenticated %}
+    <p>Bienvenue, {{ user.username }}!</p>
+
+    {% if perms.your_app_name.can_publish_course %}
+        <a href="{% url 'course_publish' course.id %}">Publier</a>
+    {% endif %}
+
+    {% if perms.your_app_name.can_view_statistics %}
+        <a href="{% url 'course_statistics' course.id %}">Statistiques</a>
+    {% endif %}
+
+    <a href="{% url 'logout' %}">Déconnexion</a>
+{% else %}
+    <a href="{% url 'login' %}">Connexion</a>
+{% endif %}
