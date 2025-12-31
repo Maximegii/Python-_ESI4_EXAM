@@ -91,3 +91,12 @@ def login_view(request):
             messages.error(request, "Nom d'utilisateur ou mot de passe incorrect.")
     
     return render(request, 'login.html')
+
+# Partie C: Concepts
+# 1. Expliquez le pattern Post-redirect-Get et pourquoi il est important. 
+Ce pattern permet d'eviter les doublons de soumission de formulaire. Quand un utilisateur envoie un formulaire via POST, le serveur traite et redirige l'utilisateur vers une page GET.
+
+#2. Que fait exactement le token CSRF dans django et pourquoi est-il nécessaire ?
+le token CSRF est une sécurité qui permet de vérifier l'authenticité de l'utilisateur.
+
+
